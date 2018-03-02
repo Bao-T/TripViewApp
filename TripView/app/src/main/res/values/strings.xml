@@ -1,0 +1,31 @@
+<resources>
+    <string name="picture">Picture</string>
+    <string name="description_info">Info</string>
+    <string name="request_permission">This sample needs camera permission.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="app_name">TripView</string>
+    <string name ="MapsAPIKey">	AIzaSyAoovZOid1UwU90iSEYMaWXHz7Qmppdugo</string>
+    <string name="intro_message">
+        <![CDATA[
+
+
+            Welcome to TripView
+
+
+        ]]>
+    </string>
+    <string-array name="company_list">
+        <item>Apple</item>
+        <item>Facebook</item>
+        <item>Google</item>
+        <item>Instagram</item>
+        <item>Linked in</item>
+        <item>Microsoft</item>
+        <item>MySpace</item>
+        <item>Skype</item>
+        <item>Snapchat</item>
+        <item>Twitter</item>
+        <item>Viber</item>
+        <item>Whatsapp</item>
+    </string-array>
+</resources>
