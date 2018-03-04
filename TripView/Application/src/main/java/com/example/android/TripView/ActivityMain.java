@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
  */
 
 public class ActivityMain extends AppCompatActivity {
+    Button addTrip;
     private ListView tripList;
     private ArrayList<String> stringArrayList;
     private ArrayAdapter<String> stringArrayAdapter;
@@ -41,6 +43,15 @@ public class ActivityMain extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.trip_selection);
+        addTrip = findViewById(R.id.addTrip);
+        addTrip.setText("Create a Trip");
+        addTrip.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ActivityMain.this, AddTripActivity.class);
+                startActivity(intent);
+            }
+        });
         tripList = (ListView) findViewById(R.id.list);
         stringArrayList = new ArrayList<String>();
         for (int i = 0; i < 30; i++){
