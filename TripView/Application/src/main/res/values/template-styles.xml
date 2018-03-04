@@ -22,7 +22,10 @@
 
     <style name="Theme.Sample" parent="Theme.Base" />
 
-    <style name="AppTheme" parent="Theme.Sample" />
+    <style name="AppTheme" parent="Theme.Sample" >
+        <item name="android:colorForeground">@color/wallet_bright_foreground_holo_dark</item>
+        <item name="android:colorBackground">@color/cast_expanded_controller_background_color</item>
+    </style>
     <!-- Widget styling -->
 
     <style name="Widget" />
