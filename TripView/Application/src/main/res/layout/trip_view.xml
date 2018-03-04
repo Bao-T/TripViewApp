@@ -20,7 +20,7 @@
         android:layout_height="match_parent"
         android:layout_weight="50"
         android:id="@+id/map"
-        tools:context=".MapsActivity"
+        tools:context="com.example.android.TripView.TripView"
         android:name="com.google.android.gms.maps.SupportMapFragment" />
 
     <android.support.v7.widget.RecyclerView

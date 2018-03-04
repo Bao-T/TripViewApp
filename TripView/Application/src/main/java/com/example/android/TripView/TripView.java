@@ -25,9 +25,13 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.camera2basic.R;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,7 +41,7 @@ import java.util.Date;
  * Created by Bao on 2/26/2018.
  */
 
-public class TripView extends AppCompatActivity {
+public class TripView extends AppCompatActivity implements OnMapReadyCallback {
     RecyclerView rvMain;
     String currentTrip;
     TextView currTrip;
@@ -45,6 +49,7 @@ public class TripView extends AppCompatActivity {
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1234;
+    private ArrayList<placeObject> locations = new ArrayList<placeObject>();
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
     @Override
@@ -52,7 +57,10 @@ public class TripView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.trip_view);
         //Create the Google Maps Fragment
-        getLocationPermission();
+        //getLocationPermission();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
         rvMain = (RecyclerView) findViewById(R.id.rvMain);
         currTrip = (TextView) findViewById(R.id.currTrip);
         camButton = (Button) findViewById(R.id.camButton);
@@ -72,23 +80,36 @@ public class TripView extends AppCompatActivity {
         int count = 0;
         for (String image:images){
                 if (count <=100)
-                 bitmapImages.add(decodeSampledBitmapFromUri(image, 100, 100));
+                 decodeSampledBitmapFromUri(image, 50, 50);
                 count ++;
         }
-        MyAdapter adapter = new MyAdapter(bitmapImages);
+        MyAdapter adapter = new MyAdapter(locations);
         rvMain.setLayoutManager(new GridLayoutManager(TripView.this, 4));
         rvMain.setAdapter(adapter);
 
     }
+    private class placeObject{
+        public MarkerOptions markerOptions;
+        public Bitmap bitmap;
+        public String imagePath;
+        public Marker marker;
+        public Boolean hasGPS = false;
 
+        public placeObject(MarkerOptions markerOptions, Bitmap bitmap, String imagePath){
+            this.markerOptions = markerOptions;
+            this.bitmap = bitmap;
+            this.imagePath = imagePath;
+            if (this.markerOptions.getPosition().latitude != 0.0 && this.markerOptions.getPosition().longitude != 0.0)
+                this.hasGPS = true;
+        }
+    };
     private class MyAdapter extends RecyclerView.Adapter<MyViewHolder> {
 
 
-        ArrayList<Bitmap> logoList;
+        //ArrayList<placeObject> places;
 
-        public MyAdapter( ArrayList<Bitmap> logoList) {
-
-            this.logoList = logoList;
+        public MyAdapter( ArrayList<placeObject> places) {
+            //this.places = places;
         }
 
 
@@ -101,11 +122,17 @@ public class TripView extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(MyViewHolder holder, final int position) {
-            holder.logo.setImageBitmap(logoList.get(position));
+            holder.logo.setImageBitmap(locations.get(position).bitmap);
             holder.logo.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    Toast.makeText(TripView.this, "This is: clicked", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(TripView.this, "This is: clicked", Toast.LENGTH_SHORT).show();
+                    if (locations.get(position).hasGPS == true){
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locations.get(position).markerOptions.getPosition(),(float)20.0));
+                    locations.get(position).marker.showInfoWindow();}
+                    else
+                        Toast.makeText(TripView.this, "No GPS data", Toast.LENGTH_SHORT).show();
+
                 }
             });
 
@@ -113,7 +140,7 @@ public class TripView extends AppCompatActivity {
 
         @Override
         public int getItemCount() {
-            return logoList.size();
+            return locations.size();
         }
     }
     private class MyViewHolder extends RecyclerView.ViewHolder{
@@ -127,7 +154,7 @@ public class TripView extends AppCompatActivity {
 
         }
     }
-    public Bitmap decodeSampledBitmapFromUri(String path, int reqWidth, int reqHeight) {
+    public void decodeSampledBitmapFromUri(String path, int reqWidth, int reqHeight) {
 
         Bitmap bm = null;
 
@@ -186,11 +213,16 @@ public class TripView extends AppCompatActivity {
                 else{
                     Longitude = 0 - convertToDegree(attrLONGITUDE);
                 }}
-        Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
+            //locations.add(new MarkerOptions().position(new LatLng(Latitude,Longitude)).title("Place "));
+            //Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
+            locations.add(new placeObject(
+                    new MarkerOptions().position(new LatLng(Latitude,Longitude)).title(path),
+                    bm, path));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();}
-        return bm;
+
+        //return bm;
     }
     public int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
 
@@ -235,12 +267,7 @@ public class TripView extends AppCompatActivity {
     };
     private void initMap(){
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap googleMap) {
-                mMap = googleMap;
-            }
-        });
+        mapFragment.getMapAsync(this);
 
     }
     private void getLocationPermission(){
@@ -255,7 +282,18 @@ public class TripView extends AppCompatActivity {
                     LOCATION_PERMISSION_REQUEST_CODE);
         }
     }
-
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        // Add a marker in Sydney, Australia,
+        // and move the map's camera to the same location.
+        //LatLng sydney = new LatLng(-33.852, 151.211);
+        //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
+        mMap = googleMap;
+        for (placeObject placeObject: locations){
+            if(placeObject.markerOptions.getPosition().longitude != 0 && placeObject.markerOptions.getPosition().latitude != 0 )
+                placeObject.marker = googleMap.addMarker(placeObject.markerOptions);}
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(locations.get(0).markerOptions.getPosition()));
+    }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         mLocationPermissionsGranted = false;
