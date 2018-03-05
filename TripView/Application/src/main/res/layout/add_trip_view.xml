@@ -9,7 +9,7 @@
         android:layout_height="wrap_content"
         android:textSize="25dp"
         android:inputType="text"
-        android:text="Trip Name" />
+        android:text="Trip_Name" />
 
     <EditText
         android:id="@+id/description"

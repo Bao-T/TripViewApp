@@ -2,6 +2,7 @@ package com.example.android.TripView;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -26,6 +27,12 @@ import com.example.android.camera2basic.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 /**
@@ -54,9 +61,21 @@ public class ActivityMain extends AppCompatActivity {
         });
         tripList = (ListView) findViewById(R.id.list);
         stringArrayList = new ArrayList<String>();
-        for (int i = 0; i < 30; i++){
-            stringArrayList.add("Trip #" + i);
+        File dir = ActivityMain.this.getFilesDir();
+        File[] subFiles = dir.listFiles();
+
+        if (subFiles != null)
+        {
+            for (File file : subFiles)
+            {
+                if(file.getPath().endsWith(".txt"))
+                    stringArrayList.add("file");
+            }
         }
+
+        //for (int i = 0; i < 30; i++){
+            //stringArrayList.add("Trip #" + i);
+        //}
         stringArrayAdapter = new ArrayAdapter<String>
                 (this, android.R.layout.simple_list_item_1, stringArrayList){
             @Override
@@ -109,6 +128,35 @@ public class ActivityMain extends AppCompatActivity {
             Toast.makeText(this, "You can't make map requests", Toast.LENGTH_SHORT).show();
         }
         return false;
+    }
+    private String readFromFile(Context context) {
+
+        String ret = "";
+
+        try {
+            InputStream inputStream = context.openFileInput("config.txt");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+        return ret;
     }
 }
 

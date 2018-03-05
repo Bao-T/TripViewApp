@@ -79,7 +79,17 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
         currTrip.setText(currentTrip);
         GenerateImageTask ImageSetup = new GenerateImageTask();
         ImageSetup.execute();
+        ImageManager im = new ImageManager();
+        ArrayList<String> images = im.getPlayList();
+        int count = 0;
+        for (String image : images) {
+            if (count <= 100)
+                decodeSampledBitmapFromUri(image, 50, 50);
+            count++;
+        }
         MyAdapter adapter = new MyAdapter(locations);
+        rvMain.setLayoutManager(new GridLayoutManager(TripView.this, 4));
+        rvMain.setAdapter(adapter);
 
 
 
@@ -322,17 +332,7 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
     private class GenerateImageTask extends AsyncTask<Long, String, Long>{
         @Override
         protected Long doInBackground(Long... arg0){
-            ImageManager im = new ImageManager();
-            ArrayList<String> images = im.getPlayList();
-            int count = 0;
-            for (String image : images) {
-                if (count <= 100)
-                    decodeSampledBitmapFromUri(image, 50, 50);
-                count++;
-            }
-            MyAdapter adapter = new MyAdapter(locations);
-            rvMain.setLayoutManager(new GridLayoutManager(TripView.this, 4));
-            rvMain.setAdapter(adapter);
+
             return null;
         }
         @Override
