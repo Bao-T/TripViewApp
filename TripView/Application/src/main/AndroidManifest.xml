@@ -48,6 +48,13 @@
         <activity android:name="com.example.android.TripView.TripView"/>
         <activity android:name="com.example.android.TripView.CameraActivity"/>
         <activity android:name="com.example.android.TripView.AddTripActivity"/>
+        <activity android:name="com.example.android.TripView.SplashActivity" android:theme="@style/SplashTheme">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
+        <!--<activity android:name="com$example$android$TripView$ActivityMain.HomeActivity" />-->
     </application>
 
 </manifest>
