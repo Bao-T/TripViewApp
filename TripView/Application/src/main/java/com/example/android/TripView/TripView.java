@@ -183,7 +183,6 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
         String exif = "Exif: " + path;
         try {
             ExifInterface exifInterface = new ExifInterface(path);
-
             //exif += "\nIMAGE_LENGTH: " + exifInterface.getAttribute(ExifInterface.TAG_IMAGE_LENGTH);
             //exif += "\nIMAGE_WIDTH: " + exifInterface.getAttribute(ExifInterface.TAG_IMAGE_WIDTH);
             //exif += "\n DATETIME: " + exifInterface.getAttribute(ExifInterface.TAG_DATETIME);
@@ -204,57 +203,60 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
             //String attrDATETIME = exifInterface.getAttribute(ExifInterface.TAG_DATETIME);
             boolean valid = false;
             Date imageDate;
-            try {
-                String [] DateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME).split(" ");
-                imageDate = exifDateFormat.parse(DateTime[0]);
+
+                try {
+                    if (exifInterface.getAttribute(ExifInterface.TAG_DATETIME) != null) {
+                        Log.d("exif", exifInterface.getAttribute(ExifInterface.TAG_DATETIME));
+                        String[] DateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME).split(" ");
+                        imageDate = exifDateFormat.parse(DateTime[0]);
 
 
-            if (imageDate.after(startDate) && imageDate.before(endDate)) {
+                        if (imageDate.after(startDate) && imageDate.before(endDate)) {
 
-                    Float Longitude = (float) 0;
-                    Float Latitude = (float) 0;
-                    String attrLATITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE);
-                    String attrLATITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF);
-                    String attrLONGITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
-                    String attrLONGITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
+                            Float Longitude = (float) 0;
+                            Float Latitude = (float) 0;
+                            String attrLATITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE);
+                            String attrLATITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF);
+                            String attrLONGITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
+                            String attrLONGITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
 
-                    if ((attrLATITUDE != null) && (attrLATITUDE_REF != null) && (attrLONGITUDE != null) && (attrLONGITUDE_REF != null)) {
-                        valid = true;
-                        if (attrLATITUDE_REF.equals("N")) {
-                            Latitude = convertToDegree(attrLATITUDE);
-                        } else {
-                            Latitude = 0 - convertToDegree(attrLATITUDE);
-                        }
+                            if ((attrLATITUDE != null) && (attrLATITUDE_REF != null) && (attrLONGITUDE != null) && (attrLONGITUDE_REF != null)) {
+                                valid = true;
+                                if (attrLATITUDE_REF.equals("N")) {
+                                    Latitude = convertToDegree(attrLATITUDE);
+                                } else {
+                                    Latitude = 0 - convertToDegree(attrLATITUDE);
+                                }
 
-                        if (attrLONGITUDE_REF.equals("E")) {
-                            Longitude = convertToDegree(attrLONGITUDE);
-                        } else {
-                            Longitude = 0 - convertToDegree(attrLONGITUDE);
+                                if (attrLONGITUDE_REF.equals("E")) {
+                                    Longitude = convertToDegree(attrLONGITUDE);
+                                } else {
+                                    Longitude = 0 - convertToDegree(attrLONGITUDE);
+                                }
+                            }
+                            Bitmap bm = null;
+                            final BitmapFactory.Options options = new BitmapFactory.Options();
+                            options.inJustDecodeBounds = true;
+                            BitmapFactory.decodeFile(path, options);
+                            options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+                            options.inJustDecodeBounds = false;
+                            bm = BitmapFactory.decodeFile(path, options);
+                            //locations.add(new MarkerOptions().position(new LatLng(Latitude,Longitude)).title("Place "));
+                            //Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
+                            locations.add(new placeObject(
+                                    new MarkerOptions().position(new LatLng(Latitude, Longitude)).title(path),
+                                    bm, path));
                         }
                     }
-                    Bitmap bm = null;
-                    final BitmapFactory.Options options = new BitmapFactory.Options();
-                    options.inJustDecodeBounds = true;
-                    BitmapFactory.decodeFile(path, options);
-                    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-                    options.inJustDecodeBounds = false;
-                    bm = BitmapFactory.decodeFile(path, options);
-                    //locations.add(new MarkerOptions().position(new LatLng(Latitude,Longitude)).title("Place "));
-                    //Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
-                    locations.add(new placeObject(
-                            new MarkerOptions().position(new LatLng(Latitude, Longitude)).title(path),
-                            bm, path));
-                }
 
-            } catch (ParseException e) {
+                } catch (ParseException e) {
                     // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-
+            } catch(IOException e){
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         //return bm;
     }
 
