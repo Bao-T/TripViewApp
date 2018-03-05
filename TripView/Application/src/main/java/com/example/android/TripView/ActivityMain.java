@@ -56,7 +56,9 @@ public class ActivityMain extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ActivityMain.this, AddTripActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
+
             }
         });
         tripList = (ListView) findViewById(R.id.list);
@@ -69,7 +71,7 @@ public class ActivityMain extends AppCompatActivity {
             for (File file : subFiles)
             {
                 if(file.getPath().endsWith(".txt"))
-                    stringArrayList.add("file");
+                    stringArrayList.add(file.getName());
             }
         }
 
@@ -98,8 +100,11 @@ public class ActivityMain extends AppCompatActivity {
             @Override
             public void onItemClick(AdapterView<?> adapter, View v, int position, long id){
                 String selectedFromList = (String)(tripList.getItemAtPosition(position));
+                String[] filedata = readFromFile(ActivityMain.this, selectedFromList);
                 Intent intent = new Intent(ActivityMain.this, TripView.class);
                 intent.putExtra("tripName", selectedFromList);
+                intent.putExtra("startDate", filedata[1]);
+                intent.putExtra("endDate", filedata[2]);
                 startActivity(intent);
             }
         });
@@ -129,12 +134,12 @@ public class ActivityMain extends AppCompatActivity {
         }
         return false;
     }
-    private String readFromFile(Context context) {
+    private String[] readFromFile(Context context, String fileName) {
 
         String ret = "";
 
         try {
-            InputStream inputStream = context.openFileInput("config.txt");
+            InputStream inputStream = context.openFileInput(fileName);
 
             if ( inputStream != null ) {
                 InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
@@ -155,8 +160,8 @@ public class ActivityMain extends AppCompatActivity {
         } catch (IOException e) {
             Log.e("login activity", "Can not read file: " + e.toString());
         }
-
-        return ret;
+        String[] separated = ret.split(",");
+        return separated;
     }
 }
 

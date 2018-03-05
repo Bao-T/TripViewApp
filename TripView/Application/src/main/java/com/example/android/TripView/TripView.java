@@ -1,7 +1,6 @@
 package com.example.android.TripView;
 
 import android.Manifest;
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -36,8 +35,11 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * Created by Bao on 2/26/2018.
@@ -45,9 +47,9 @@ import java.util.Date;
 
 public class TripView extends AppCompatActivity implements OnMapReadyCallback {
     RecyclerView rvMain;
-    String currentTrip;
-    TextView currTrip;
+
     Button camButton;
+
     private ProgressDialog pd;
     private static final String FINE_LOCATION = Manifest.permission.ACCESS_FINE_LOCATION;
     private static final String COURSE_LOCATION = Manifest.permission.ACCESS_COARSE_LOCATION;
@@ -55,18 +57,24 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
     private ArrayList<placeObject> locations = new ArrayList<placeObject>();
     private Boolean mLocationPermissionsGranted = false;
     private GoogleMap mMap;
-
+    private Date startDate;
+    private Date endDate;
+    private SimpleDateFormat exifDateFormat = new SimpleDateFormat("yyyy:mm:dd");
+    private SimpleDateFormat rangeDateFormat = new SimpleDateFormat("MM/dd/yyyy");
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.trip_view);
+        getSupportActionBar().setTitle(getIntent().getStringExtra("tripName"));
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        exifDateFormat.setLenient(false);
+        rangeDateFormat.setLenient(false);
         //Create the Google Maps Fragment
         //getLocationPermission();
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
         rvMain = (RecyclerView) findViewById(R.id.rvMain);
-        currTrip = (TextView) findViewById(R.id.currTrip);
         camButton = (Button) findViewById(R.id.camButton);
         camButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -75,8 +83,15 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
                 startActivity(intent);
             }
         });
-        currentTrip = getIntent().getStringExtra("tripName");
-        currTrip.setText(currentTrip);
+
+        try {
+            String s = getIntent().getStringExtra("startDate");
+            startDate = rangeDateFormat.parse(getIntent().getStringExtra("startDate"));
+            endDate = rangeDateFormat.parse(getIntent().getStringExtra("endDate"));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
         GenerateImageTask ImageSetup = new GenerateImageTask();
         ImageSetup.execute();
         ImageManager im = new ImageManager();
@@ -136,7 +151,7 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
                 public void onClick(View v) {
                     //Toast.makeText(TripView.this, "This is: clicked", Toast.LENGTH_SHORT).show();
                     if (locations.get(position).hasGPS == true) {
-                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locations.get(position).markerOptions.getPosition(), (float) 20.0));
+                        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(locations.get(position).markerOptions.getPosition(), (float) 15.0));
                         locations.get(position).marker.showInfoWindow();
                     } else
                         Toast.makeText(TripView.this, "No GPS data", Toast.LENGTH_SHORT).show();
@@ -165,19 +180,6 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
     }
 
     public void decodeSampledBitmapFromUri(String path, int reqWidth, int reqHeight) {
-
-        Bitmap bm = null;
-
-        final BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        BitmapFactory.decodeFile(path, options);
-
-
-        options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
-
-
-        options.inJustDecodeBounds = false;
-        bm = BitmapFactory.decodeFile(path, options);
         String exif = "Exif: " + path;
         try {
             ExifInterface exifInterface = new ExifInterface(path);
@@ -199,34 +201,55 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
             //exif += "\n TAG_GPS_LONGITUDE: " + exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
             //exif += "\n TAG_GPS_LONGITUDE_REF: " + exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
             //exif += "\n TAG_GPS_PROCESSING_METHOD: " + exifInterface.getAttribute(ExifInterface.TAG_GPS_PROCESSING_METHOD);
-
+            //String attrDATETIME = exifInterface.getAttribute(ExifInterface.TAG_DATETIME);
             boolean valid = false;
-            Float Longitude = (float) 0;
-            Float Latitude = (float) 0;
-            String attrLATITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE);
-            String attrLATITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF);
-            String attrLONGITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
-            String attrLONGITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
+            Date imageDate;
+            try {
+                String [] DateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME).split(" ");
+                imageDate = exifDateFormat.parse(DateTime[0]);
 
-            if ((attrLATITUDE != null) && (attrLATITUDE_REF != null) && (attrLONGITUDE != null) && (attrLONGITUDE_REF != null)) {
-                valid = true;
-                if (attrLATITUDE_REF.equals("N")) {
-                    Latitude = convertToDegree(attrLATITUDE);
-                } else {
-                    Latitude = 0 - convertToDegree(attrLATITUDE);
+
+            if (imageDate.after(startDate) && imageDate.before(endDate)) {
+
+                    Float Longitude = (float) 0;
+                    Float Latitude = (float) 0;
+                    String attrLATITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE);
+                    String attrLATITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LATITUDE_REF);
+                    String attrLONGITUDE = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE);
+                    String attrLONGITUDE_REF = exifInterface.getAttribute(ExifInterface.TAG_GPS_LONGITUDE_REF);
+
+                    if ((attrLATITUDE != null) && (attrLATITUDE_REF != null) && (attrLONGITUDE != null) && (attrLONGITUDE_REF != null)) {
+                        valid = true;
+                        if (attrLATITUDE_REF.equals("N")) {
+                            Latitude = convertToDegree(attrLATITUDE);
+                        } else {
+                            Latitude = 0 - convertToDegree(attrLATITUDE);
+                        }
+
+                        if (attrLONGITUDE_REF.equals("E")) {
+                            Longitude = convertToDegree(attrLONGITUDE);
+                        } else {
+                            Longitude = 0 - convertToDegree(attrLONGITUDE);
+                        }
+                    }
+                    Bitmap bm = null;
+                    final BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;
+                    BitmapFactory.decodeFile(path, options);
+                    options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
+                    options.inJustDecodeBounds = false;
+                    bm = BitmapFactory.decodeFile(path, options);
+                    //locations.add(new MarkerOptions().position(new LatLng(Latitude,Longitude)).title("Place "));
+                    //Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
+                    locations.add(new placeObject(
+                            new MarkerOptions().position(new LatLng(Latitude, Longitude)).title(path),
+                            bm, path));
                 }
 
-                if (attrLONGITUDE_REF.equals("E")) {
-                    Longitude = convertToDegree(attrLONGITUDE);
-                } else {
-                    Longitude = 0 - convertToDegree(attrLONGITUDE);
+            } catch (ParseException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
-            }
-            //locations.add(new MarkerOptions().position(new LatLng(Latitude,Longitude)).title("Place "));
-            //Log.d("exif", Float.toString(Latitude) + Float.toString(Longitude));
-            locations.add(new placeObject(
-                    new MarkerOptions().position(new LatLng(Latitude, Longitude)).title(path),
-                    bm, path));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -304,11 +327,16 @@ public class TripView extends AppCompatActivity implements OnMapReadyCallback {
         //LatLng sydney = new LatLng(-33.852, 151.211);
         //googleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap = googleMap;
+        Boolean firstGPS = false;
         for (placeObject placeObject : locations) {
             if (placeObject.markerOptions.getPosition().longitude != 0 && placeObject.markerOptions.getPosition().latitude != 0)
+                if (firstGPS == false){
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(placeObject.markerOptions.getPosition(),15));
+                firstGPS = true;
+                }
                 placeObject.marker = googleMap.addMarker(placeObject.markerOptions);
         }
-        googleMap.moveCamera(CameraUpdateFactory.newLatLng(locations.get(0).markerOptions.getPosition()));
+        //googleMap.moveCamera(CameraUpdateFactory.newLatLng(locations.get(0).markerOptions.getPosition()));
     }
 
     @Override

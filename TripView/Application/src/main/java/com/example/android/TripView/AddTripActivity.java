@@ -2,6 +2,7 @@ package com.example.android.TripView;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -28,6 +29,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.DecimalFormat;
 import java.util.Calendar;
 
 
@@ -46,6 +48,7 @@ public class AddTripActivity extends AppCompatActivity{
     private DatePickerDialog.OnDateSetListener endDateListener;
     private Calendar sDate = Calendar.getInstance();
     private Calendar eDate = Calendar.getInstance();
+    private DecimalFormat formatter = new DecimalFormat("00");
 
     private String blockCharacterSet = "~`!@#$%^&*()_+-={[}]|\';<,>.?\"/:";
 
@@ -65,6 +68,9 @@ public class AddTripActivity extends AppCompatActivity{
     public void onCreate(@Nullable Bundle savedInstanceState){
         super.onCreate(savedInstanceState);
         setContentView(R.layout.add_trip_view);
+        getSupportActionBar().setTitle("Add a new trip!");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         startDate = (TextView) findViewById(R.id.startDate);
         endDate = (TextView) findViewById(R.id.endDate);
         startDate.setOnClickListener(new View.OnClickListener() {
@@ -96,14 +102,14 @@ public class AddTripActivity extends AppCompatActivity{
         startDateListener = new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                startDate.setText((month+1) + "/" + dayOfMonth + "/" + year);
+                startDate.setText((month+1) + "/" + (dayOfMonth) + "/" + year);
                 sDate.set(year, month, dayOfMonth);
             }
         };
         endDateListener = new DatePickerDialog.OnDateSetListener() {
             @Override
             public void onDateSet(DatePicker view, int year, int month, int dayOfMonth) {
-                endDate.setText((month+1) + "/" + dayOfMonth + "/" + year);
+                endDate.setText((month+1) + "/" + (dayOfMonth) + "/" + year);
                 eDate.set(year, month, dayOfMonth);
             }
         };
@@ -120,9 +126,14 @@ public class AddTripActivity extends AppCompatActivity{
                 if(file.exists()){
                     Toast.makeText(AddTripActivity.this, "This title already exists.", Toast.LENGTH_SHORT).show();
                 }
+                else if (startDate.getText().toString() == "" || endDate.getText().toString() == "")
+                    Toast.makeText(AddTripActivity.this, "Please enter a valid date range.", Toast.LENGTH_SHORT).show();
                 else{
-                    String data = title.getText().toString() + "/" + startDate.getText().toString() + "/" + endDate.getText().toString();
+                    String data = title.getText().toString() + "," + startDate.getText().toString() + "," + endDate.getText().toString();
                     writeToFile(data, AddTripActivity.this, title.getText().toString());
+                    Intent intent = new Intent(AddTripActivity.this, ActivityMain.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                    startActivity(intent);
                 }
             }
         });
